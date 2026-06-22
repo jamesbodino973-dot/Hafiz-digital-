@@ -34,12 +34,32 @@ service cloud.firestore {
          && data.downloadLink is string && data.downloadLink.size() <= 2000;
     }
 
+    function isValidPurchase(data) {
+      return data.userId == request.auth.uid
+         && data.userEmail is string && data.userEmail.size() > 0 && data.userEmail.size() <= 200
+         && data.productId is string && data.productId.size() <= 128
+         && data.productTitle is string && data.productTitle.size() > 0 && data.productTitle.size() <= 200
+         && data.productImage is string && data.productImage.size() <= 2000000
+         && data.productCategory is string && data.productCategory.size() <= 50
+         && data.downloadLink is string && data.downloadLink.size() <= 2000
+         && data.pricePaid is number && data.pricePaid >= 0
+         && data.purchasedAt == request.time;
+    }
+
     // Catalog collection rules
     match /products/{productId} {
       allow read: if true; // anyone can fetch products
       allow create: if isAdmin() && isValidProduct(request.resource.data);
       allow update: if isAdmin() && isValidProduct(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    // Past Purchases collection rules (secured to customer)
+    match /purchases/{purchaseId} {
+      allow create: if isSignedIn() && isValidId(purchaseId) && isValidPurchase(request.resource.data);
+      allow read: if isSignedIn() && isValidId(purchaseId) && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if false; // purchases are immutable records
     }
   }
 }

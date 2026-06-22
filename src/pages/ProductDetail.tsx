@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Tag, Lock, Sparkles, CheckCircle, ShieldCheck, HelpCircle, DownloadCloud, ChevronRight, FileText, Smartphone, Mail, CreditCard, ExternalLink, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Tag, Lock, Sparkles, CheckCircle, ShieldCheck, HelpCircle, DownloadCloud, ChevronRight, FileText, Smartphone, Mail, CreditCard, ExternalLink, ShoppingBag, MessageCircle } from 'lucide-react';
 import { Product } from '../types';
+import { db, auth } from '../firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../utils/firestore-helpers';
 
 interface ProductDetailProps {
   product: Product | null;
@@ -25,6 +28,16 @@ export default function ProductDetail({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (auth.currentUser) {
+      setEmail(auth.currentUser.email || '');
+      setCardName(auth.currentUser.displayName || '');
+    } else {
+      setEmail('');
+      setCardName('');
+    }
+  }, [product]);
+
   if (!product) {
     return (
       <div className="py-12 text-center text-zinc-550 space-y-4">
@@ -39,7 +52,7 @@ export default function ProductDetail({
     );
   }
 
-  const handleSimulatedCheckout = (e: React.FormEvent) => {
+  const handleSimulatedCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setPaymentError(null);
 
@@ -49,6 +62,26 @@ export default function ProductDetail({
 
     setCheckoutStep('paying');
     setIsProcessing(true);
+
+    if (auth.currentUser) {
+      try {
+        const purchaseRef = collection(db, 'purchases');
+        await addDoc(purchaseRef, {
+          userId: auth.currentUser.uid,
+          userEmail: auth.currentUser.email || email,
+          productId: product.id,
+          productTitle: product.title,
+          productImage: product.image,
+          productCategory: product.category,
+          downloadLink: product.downloadLink,
+          pricePaid: Number(product.price),
+          purchasedAt: serverTimestamp()
+        });
+      } catch (err: any) {
+        console.error('Failed to log purchase: ', err);
+        handleFirestoreError(err, OperationType.CREATE, 'purchases');
+      }
+    }
 
     // Simulate 1.5 seconds payment gateway hook
     setTimeout(() => {
@@ -313,6 +346,25 @@ export default function ProductDetail({
                           </>
                         )}
                       </button>
+
+                      {/* Line Separator */}
+                      <div className="relative flex items-center justify-center py-2">
+                        <div className="absolute inset-x-0 h-px bg-zinc-900" />
+                        <span className="relative px-2 bg-[#0F0F11] text-[9px] font-mono tracking-widest text-[#52525B] uppercase">
+                          or Buy Directly
+                        </span>
+                      </div>
+
+                      {/* WhatsApp Direct Option */}
+                      <a
+                        href={`https://wa.me/923218379127?text=${encodeURIComponent(`I want to buy something: ${product.title}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3 rounded font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Order via WhatsApp</span>
+                      </a>
                     </div>
                   </form>
                 </div>

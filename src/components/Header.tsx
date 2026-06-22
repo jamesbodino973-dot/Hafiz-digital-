@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Box, Shield, Menu, X, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, Box, Shield, Menu, X, ArrowLeft, User as UserIcon } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { auth } from '../firebase';
+import { User } from 'firebase/auth';
 
 interface HeaderProps {
   currentView: string;
@@ -20,6 +22,14 @@ export default function Header({
   onCartClick
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const navigateTo = (view: string) => {
     if (setSelectedProductId) {
@@ -78,6 +88,18 @@ export default function Header({
             >
               <Shield className="w-3.5 h-3.5" />
               Admin
+            </button>
+            <button
+              id="nav-profile"
+              onClick={() => navigateTo('profile')}
+              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ${
+                currentView === 'profile'
+                  ? 'text-white bg-zinc-900 border border-zinc-800'
+                  : 'text-zinc-450 hover:text-white hover:bg-zinc-900/50'
+              }`}
+            >
+              <UserIcon className="w-3.5 h-3.5" />
+              <span>{currentUser ? (currentUser.displayName || 'Profile') : 'Sign In'}</span>
             </button>
           </nav>
 
@@ -158,6 +180,18 @@ export default function Header({
           >
             <Shield className="w-4 h-4" />
             Admin Panel
+          </button>
+          <button
+            id="mobile-nav-profile"
+            onClick={() => navigateTo('profile')}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${
+              currentView === 'profile'
+                ? 'text-white bg-zinc-900 border border-zinc-800'
+                : 'text-zinc-400'
+            }`}
+          >
+            <UserIcon className="w-4 h-4" />
+            {currentUser ? (currentUser.displayName || 'Profile') : 'Sign In'}
           </button>
         </div>
       )}

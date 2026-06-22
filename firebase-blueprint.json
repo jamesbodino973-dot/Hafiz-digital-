@@ -55,12 +55,70 @@
         "image",
         "downloadLink"
       ]
+    },
+    "Purchase": {
+      "title": "Purchase",
+      "description": "A digital asset purchase made by an authenticated user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Auth UID of the customer"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email address of the customer"
+        },
+        "productId": {
+          "type": "string",
+          "description": "The purchased product identifier"
+        },
+        "productTitle": {
+          "type": "string",
+          "description": "Product title"
+        },
+        "productImage": {
+          "type": "string",
+          "description": "Product category image cover"
+        },
+        "productCategory": {
+          "type": "string",
+          "description": "Category of the product"
+        },
+        "downloadLink": {
+          "type": "string",
+          "description": "High speed download path"
+        },
+        "pricePaid": {
+          "type": "number",
+          "description": "Price charged"
+        },
+        "purchasedAt": {
+          "type": "object",
+          "description": "The transaction timestamp"
+        }
+      },
+      "required": [
+        "userId",
+        "userEmail",
+        "productId",
+        "productTitle",
+        "productImage",
+        "productCategory",
+        "downloadLink",
+        "pricePaid",
+        "purchasedAt"
+      ]
     }
   },
   "firestore": {
     "/products/{productId}": {
       "schema": "Product",
       "description": "Live digital product catalog dataset"
+    },
+    "/purchases/{purchaseId}": {
+      "schema": "Purchase",
+      "description": "Purchased items history to enable lifetime access"
     }
   }
 }

@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Lock, ShieldCheck, CreditCard, ChevronRight, CheckCircle2, 
-  DownloadCloud, Trash2, Sparkles, Building2, Terminal, RefreshCcw, ExternalLink
+  DownloadCloud, Trash2, Sparkles, Building2, Terminal, RefreshCcw, ExternalLink, MessageCircle
 } from 'lucide-react';
 import { Product } from '../types';
+import { db, auth } from '../firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../utils/firestore-helpers';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -42,11 +45,18 @@ export default function CheckoutModal({
     if (isOpen) {
       setStep('details');
       setProcessPercentage(0);
+      if (auth.currentUser) {
+        setEmail(auth.currentUser.email || '');
+        setCardholderName(auth.currentUser.displayName || '');
+      } else {
+        setEmail('');
+        setCardholderName('');
+      }
     }
   }, [isOpen]);
 
   // Handle Simulated checkout trigger
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
     
@@ -54,6 +64,29 @@ export default function CheckoutModal({
     setStep('processing');
     setProcessPercentage(0);
     setProcessStatus('Establishing 256-bit secure SSL Handshake...');
+
+    // Save purchase record to Firestore if user is authenticated
+    if (auth.currentUser) {
+      try {
+        const purchaseRef = collection(db, 'purchases');
+        for (const item of cartItems) {
+          await addDoc(purchaseRef, {
+            userId: auth.currentUser.uid,
+            userEmail: auth.currentUser.email || email,
+            productId: item.id,
+            productTitle: item.title,
+            productImage: item.image,
+            productCategory: item.category,
+            downloadLink: item.downloadLink,
+            pricePaid: Number(item.price),
+            purchasedAt: serverTimestamp()
+          });
+        }
+      } catch (err: any) {
+        console.error('Failed to write purchases to Firestore:', err);
+        handleFirestoreError(err, OperationType.CREATE, 'purchases');
+      }
+    }
 
     // Progress updates to give it a rich cinematic feel
     const intervals = [
@@ -321,6 +354,23 @@ export default function CheckoutModal({
                           <Lock className="w-3.5 h-3.5" />
                           <span>Authorize Payment (${orderTotal.toFixed(2)})</span>
                         </button>
+
+                        <div className="relative flex items-center justify-center py-2">
+                          <div className="absolute inset-x-0 h-px bg-zinc-900" />
+                          <span className="relative px-2 bg-[#0F0F11] text-[9px] font-mono tracking-widest text-[#52525B] uppercase">
+                            or Checkout via Support
+                          </span>
+                        </div>
+
+                        <a
+                          href={`https://wa.me/923218379127?text=${encodeURIComponent(`I want to buy something. Items in cart: ${cartItems.map(item => item.title).join(', ')}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span>Buy via WhatsApp</span>
+                        </a>
 
                         <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-500">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />

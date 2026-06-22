@@ -8,12 +8,14 @@ import { seedProductsIfNeeded } from './utils/seeder';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CheckoutModal from './components/CheckoutModal';
+import WhatsAppWidget from './components/WhatsAppWidget';
 
 // Pages
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
 
 import { RefreshCw, DatabaseBackup, ShieldAlert } from 'lucide-react';
 
@@ -213,6 +215,13 @@ export default function App() {
             isLoading={isLoading}
           />
         );
+      case 'profile':
+        return (
+          <Profile
+            setView={setView}
+            setSelectedProductId={handleSelectedProduct}
+          />
+        );
       default:
         return (
           <Home
@@ -249,6 +258,8 @@ export default function App() {
         onRemoveItem={handleRemoveFromCart}
         onClearCart={handleClearCart}
       />
+
+      <WhatsAppWidget />
     </div>
   );
 }
