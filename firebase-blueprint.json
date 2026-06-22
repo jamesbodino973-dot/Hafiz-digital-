@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A digital product asset inside the Hafiz store",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Product title"
+        },
+        "description": {
+          "type": "string",
+          "description": "A short summary description of the product"
+        },
+        "fullDescription": {
+          "type": "string",
+          "description": "Double line description or list of features"
+        },
+        "price": {
+          "type": "number",
+          "description": "One-time digital asset premium selling price"
+        },
+        "category": {
+          "type": "string",
+          "description": "Asset category, e.g. Template, Preset, Icon Pack, eBook, Software"
+        },
+        "image": {
+          "type": "string",
+          "description": "Image URL or base64 data uri"
+        },
+        "downloadLink": {
+          "type": "string",
+          "description": "Google Drive folder or Mediafire download reference"
+        },
+        "fileSize": {
+          "type": "string",
+          "description": "Optional metadata file size indicator"
+        },
+        "fileType": {
+          "type": "string",
+          "description": "Optional metadata file type extension"
+        },
+        "createdAt": {
+          "type": "object",
+          "description": "Firestore server timestamp metadata"
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "fullDescription",
+        "price",
+        "category",
+        "image",
+        "downloadLink"
+      ]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Live digital product catalog dataset"
+    }
+  }
+}

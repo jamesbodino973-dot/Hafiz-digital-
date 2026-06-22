@@ -1,0 +1,6 @@
+{
+  "name": "Hafiz Digital Products",
+  "description": "A sophisticated digital products marketplace for premium templates, presets, bundles, and assets, featuring secure real-time Firestore database persistence and simulated payments checkout.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

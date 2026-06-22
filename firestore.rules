@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global Default Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "areedaqueen9@gmail.com" ||
+        request.auth.token.email == "naveedali@hafiz.com" ||
+        request.auth.token.email == "naveedali@gmail.com"
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidProduct(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200
+         && data.description is string && data.description.size() <= 200
+         && data.fullDescription is string && data.fullDescription.size() <= 5000
+         && data.price is number && data.price >= 0
+         && data.category is string && data.category.size() <= 50
+         && data.image is string && data.image.size() <= 2000000 // support base64
+         && data.downloadLink is string && data.downloadLink.size() <= 2000;
+    }
+
+    // Catalog collection rules
+    match /products/{productId} {
+      allow read: if true; // anyone can fetch products
+      allow create: if isAdmin() && isValidProduct(request.resource.data);
+      allow update: if isAdmin() && isValidProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}
